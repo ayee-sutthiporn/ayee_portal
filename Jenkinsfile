@@ -1,20 +1,21 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs '์Node25' // Matches the tool name configured in Jenkins (Note: contains Thai character)
-    }
+    // tools {
+    //    nodejs '์Node25' 
+    // }
 
     stages {
-        stage('Install Dependencies') {
+        stage('Install & Build') {
             steps {
-                sh 'npm ci'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'npm run build'
+                script {
+                    // Use a Docker container to build the app
+                    // This avoids needing to install Node.js on the Jenkins server itself
+                    docker.image('node:25-alpine').inside {
+                        sh 'npm ci'
+                        sh 'npm run build'
+                    }
+                }
             }
         }
 
