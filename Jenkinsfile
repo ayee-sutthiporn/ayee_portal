@@ -42,7 +42,7 @@ pipeline {
                     
                     // 2. SSH into VPS and update service
                     sshagent(["${env.Jenkins_SSHCredentialId}"]) {
-                        sh "ssh ${env.VPSUser}@${env.VPSIP} 'cd ../srv/apps/ayee_portal && docker-compose pull && docker-compose up -d'"
+                        sh "ssh ${env.VPSUser}@${env.VPSIP} 'cd ../srv/apps/ayee_portal && docker compose pull && docker compose up -d'"
                     }
                     
                     echo 'Deployment stage is ready to be configured. Uncomment steps in Jenkinsfile to enable.'
