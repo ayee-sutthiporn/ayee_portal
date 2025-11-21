@@ -35,13 +35,13 @@ pipeline {
                 script {
                     // Example deployment steps:
                     // 1. Push image to registry
-                    docker.withRegistry('', 'docker-hub-credentials-id') {
+                    docker.withRegistry('', "${Jenkins_DockerHubCredentialId}") {
                         docker.image("${env.DockerHubName}/ayee-portal:${env.BUILD_ID}").push()
                         docker.image("${env.DockerHubName}/ayee-portal:latest").push()
                     }
                     
                     // 2. SSH into VPS and update service
-                    sshagent(['vps-ssh-credentials-id']) {
+                    sshagent(["${Jenkins_SSHCredentialId}"]) {
                         sh "ssh ${env.VPSUser}@${env.VPSIP} 'cd ../srv/apps/ayee_portal && docker-compose pull && docker-compose up -d'"
                     }
                     
