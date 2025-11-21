@@ -1,6 +1,6 @@
 services:
   ayee-portal:
-    image: ayee-portal:latest
+    image: ayeesuttiporn/ayee-portal:latest
     container_name: ayee-portal
     restart: always
     ports:
