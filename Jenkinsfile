@@ -25,7 +25,7 @@ pipeline {
                     // Build and tag the image
                     // Replace 'your-username' with your Docker Hub username
                     docker.build("${env.DockerHubName}/ayee-portal:${env.BUILD_ID}")
-                    docker.build("ayee-portal:latest")
+                    docker.build("${env.DockerHubName}/ayee-portal:latest")
                 }
             }
         }
