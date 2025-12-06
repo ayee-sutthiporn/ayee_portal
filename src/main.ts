@@ -10,7 +10,7 @@ const browserConfig: ApplicationConfig = {
     provideKeycloak({
       config: {
         url: 'https://auth.sutthiporn.dev',
-        realm: 'ayee-portal',
+        realm: 'portal.sutthiporn',
         clientId: 'portal-sutthiporn.id'
       },
       initOptions: {
