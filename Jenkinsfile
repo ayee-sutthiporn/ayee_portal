@@ -12,7 +12,7 @@ pipeline {
                     // Use a Docker container to build the app
                     // Run as root (-u 0:0) to avoid permission issues with node_modules on the mounted volume
                     docker.image('node:25-alpine').inside('-u 0:0') {
-                        sh 'npm ci'
+                        sh 'npm ci --legacy-peer-deps'
                         sh 'npm run build'
                     }
                 }
