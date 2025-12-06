@@ -1,0 +1,144 @@
+/* Body and Background */
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: #e2e8f0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Main Card Container */
+.login-pf-page .card-pf {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 450px;
+  width: 100%;
+}
+
+/* Header/Title */
+#kc-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+#kc-header-wrapper {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide default Keycloak branding if needed or style it */
+div.kc-logo-text {
+  display: none;
+}
+
+/* Form Styles */
+#kc-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Labels */
+.pf-c-form__label-text {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Inputs */
+input.pf-c-form-control,
+input#username,
+input#password {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  padding: 12px 16px;
+  width: 100%;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+
+input.pf-c-form-control:focus,
+input#username:focus,
+input#password:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Buttons */
+input[type='submit'],
+button[type='submit'],
+#kc-login {
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.2s ease;
+}
+
+input[type='submit']:hover,
+button[type='submit']:hover,
+#kc-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Links */
+#kc-registration a,
+#kc-misc-links a,
+.pf-c-button.pf-m-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+#kc-registration a:hover,
+#kc-misc-links a:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+/* Utilities */
+.pf-c-alert {
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-pf-page .card-pf {
+    padding: 24px;
+    box-shadow: none;
+    background: transparent;
+    border: none;
+  }
+}

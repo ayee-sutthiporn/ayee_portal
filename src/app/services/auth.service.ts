@@ -60,6 +60,10 @@ export class AuthService {
     return this.getUserRole() === Role.Admin;
   }
 
+  manageAccount(): void {
+    this.keycloakService.getKeycloakInstance().accountManagement();
+  }
+
   login(): void {
     this.keycloakService.login();
   }
