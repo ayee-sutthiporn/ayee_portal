@@ -1,5 +1,5 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
-import Keycloak from 'keycloak-js';
+import { KeycloakService } from 'keycloak-angular';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { User, Role } from '../models/models';
@@ -10,7 +10,7 @@ import { User, Role } from '../models/models';
 export class AuthService {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
-  private keycloak = inject(Keycloak);
+  private keycloakService = inject(KeycloakService);
 
   // Signal to track the current user
   currentUser = signal<User | null>(null);
@@ -25,13 +25,13 @@ export class AuthService {
 
   private async initUser() {
     try {
-      if (this.keycloak.authenticated) {
-        const profile = await this.keycloak.loadUserProfile();
+      if (await this.keycloakService.isLoggedIn()) {
+        const profile = await this.keycloakService.loadUserProfile();
         const user: User = {
           id: profile.id || 'unknown',
           username: profile.username || 'User',
           email: profile.email || '',
-          role: this.keycloak.hasRealmRole('admin') ? Role.Admin : Role.User,
+          role: this.keycloakService.isUserInRole('admin') ? Role.Admin : Role.User,
           createdAt: new Date() // Mock date
         };
         this.currentUser.set(user);
@@ -49,7 +49,7 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    return !!this.keycloak.authenticated;
+    return this.keycloakService.isLoggedIn();
   }
 
   getUserRole(): Role | undefined {
@@ -61,11 +61,11 @@ export class AuthService {
   }
 
   login(): void {
-    this.keycloak.login();
+    this.keycloakService.login();
   }
 
   logout(): void {
-    this.keycloak.logout({ redirectUri: window.location.origin });
+    this.keycloakService.logout(window.location.origin);
     this.currentUser.set(null);
   }
 }
