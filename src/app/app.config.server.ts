@@ -15,6 +15,9 @@ class MockKeycloakService {
   }
   login() { return; }
   logout() { return; }
+  async init() {
+    return false;
+  }
   isUserInRole() { return false; }
 }
 

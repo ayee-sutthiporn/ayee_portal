@@ -10,7 +10,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes), 
     provideClientHydration(withEventReplay()),
-    provideKeycloak({
+    ...(typeof window !== 'undefined' ? [provideKeycloak({
       config: {
         url: 'https://auth.sutthiporn.dev',
         realm: 'portal.sutthiporn',
@@ -18,9 +18,9 @@ export const appConfig: ApplicationConfig = {
       },
       initOptions: {
         onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: typeof window !== 'undefined' ? window.location.origin + '/silent-check-sso.html' : undefined,
+        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
         checkLoginIframe: false
       }
-    })
+    })] : [])
   ]
 };
