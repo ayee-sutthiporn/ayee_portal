@@ -25,37 +25,37 @@
     <!-- Category Filter -->
     <div class="flex flex-wrap justify-center gap-2">
       <button (click)="selectCategory(null)"
-              [class.bg-primary]="selectedCategory === null"
-              [class.text-white]="selectedCategory === null"
-              [class.bg-gray-100]="selectedCategory !== null"
-              [class.dark:bg-white/5]="selectedCategory !== null"
-              [class.text-gray-600]="selectedCategory !== null"
-              [class.dark:text-gray-300]="selectedCategory !== null"
+              [class.bg-primary]="selectedCategoryId() === null"
+              [class.text-white]="selectedCategoryId() === null"
+              [class.bg-gray-100]="selectedCategoryId() !== null"
+              [class.dark:bg-white/5]="selectedCategoryId() !== null"
+              [class.text-gray-600]="selectedCategoryId() !== null"
+              [class.dark:text-gray-300]="selectedCategoryId() !== null"
               class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 hover:text-white transition-all duration-200">
         All
       </button>
-      <button *ngFor="let category of categories"
-              (click)="selectCategory(category)"
-              [class.bg-primary]="selectedCategory === category"
-              [class.text-white]="selectedCategory === category"
-              [class.bg-gray-100]="selectedCategory !== category"
-              [class.dark:bg-white/5]="selectedCategory !== category"
-              [class.text-gray-600]="selectedCategory !== category"
-              [class.dark:text-gray-300]="selectedCategory !== category"
+      <button *ngFor="let category of categories()"
+              (click)="selectCategory(category.id)"
+              [class.bg-primary]="selectedCategoryId() === category.id"
+              [class.text-white]="selectedCategoryId() === category.id"
+              [class.bg-gray-100]="selectedCategoryId() !== category.id"
+              [class.dark:bg-white/5]="selectedCategoryId() !== category.id"
+              [class.text-gray-600]="selectedCategoryId() !== category.id"
+              [class.dark:text-gray-300]="selectedCategoryId() !== category.id"
               class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 hover:text-white transition-all duration-200">
-        {{ category }}
+        {{ category.name }}
       </button>
     </div>
   </div>
 
   <!-- Links Grid -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <app-link-card *ngFor="let link of filteredLinks"
-                   [title]="link.title"
-                   [url]="link.url"
-                   [description]="link.description"
-                   [icon]="link.icon"
-                   [category]="link.category">
+    <app-link-card *ngFor="let website of filteredWebsites()"
+                   [title]="website.name"
+                   [url]="website.url"
+                   [description]="website.description || ''"
+                   [icon]="website.icon || ''"
+                   [category]="getCategoryName(website.categoryId)">
     </app-link-card>
   </div>
 </div>

@@ -1,19 +1,20 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+
+
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.css'
 })
 export class AppComponent implements OnInit {
-  title = 'AyeePortal';
-  isDarkMode = false;
+  private platformId = inject(PLATFORM_ID);
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  title = 'AyeePortal';
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -26,26 +27,9 @@ export class AppComponent implements OnInit {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      this.isDarkMode = true;
       document.documentElement.classList.add('dark');
     } else {
-      this.isDarkMode = false;
       document.documentElement.classList.remove('dark');
     }
-  }
-
-  toggleTheme() {
-    this.isDarkMode = !this.isDarkMode;
-    if (this.isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }
-
-  get currentYear(): number {
-    return new Date().getFullYear();
   }
 }
