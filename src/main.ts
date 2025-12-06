@@ -12,11 +12,6 @@ const browserConfig: ApplicationConfig = {
         url: 'https://auth.sutthiporn.dev',
         realm: 'portal.sutthiporn',
         clientId: 'portal-sutthiporn.id'
-      },
-      initOptions: {
-        onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        checkLoginIframe: false
       }
     })
   ]
