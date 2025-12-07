@@ -29,7 +29,8 @@ export class CategoryService {
         { id: '3', name: 'Development', order: 3, icon: 'code' },
         { id: '4', name: 'Entertainment', order: 4, icon: 'film' },
         { id: '5', name: 'AI Tools', order: 5, icon: 'cpu' },
-        { id: '6', name: 'Design', order: 6, icon: 'palette' }
+        { id: '6', name: 'Design', order: 6, icon: 'palette' },
+        { id: '7', name: 'Other', order: 7, icon: 'other' }
       ];
       this.categories.set(defaults);
       this.saveCategories();
