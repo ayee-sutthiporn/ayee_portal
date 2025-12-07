@@ -16,7 +16,9 @@ function initializeKeycloak(keycloak: KeycloakService, platformId: object) {
           clientId: 'portal-sutthiporn.id'
         },
         initOptions: {
-          checkLoginIframe: false
+          checkLoginIframe: true,
+          onLoad: 'check-sso',
+          silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html'
         },
         enableBearerInterceptor: true,
         bearerExcludedUrls: ['/assets']
@@ -29,7 +31,7 @@ function initializeKeycloak(keycloak: KeycloakService, platformId: object) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), 
+    provideRouter(routes),
     provideClientHydration(withEventReplay()),
     KeycloakService,
     {
