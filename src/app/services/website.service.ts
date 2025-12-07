@@ -92,6 +92,16 @@ export class WebsiteService {
           categoryId: '2',
           isVisible: true,
           createdAt: new Date()
+        },
+        {
+          id: '8',
+          name: 'RaiJai',
+          url: 'https://raijai.sutthiporn.dev/',
+          description: 'RaiJai Project with SSO/SLO support.',
+          icon: 'assets/icons/raijai.ico', // Placeholder or use a generic one if no specific icon
+          categoryId: '7', // Assuming a new or existing category 'Other' or 'Internal'
+          isVisible: true,
+          createdAt: new Date()
         }
       ];
       this.websites.set(defaults);
