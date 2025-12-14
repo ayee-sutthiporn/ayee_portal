@@ -1,13 +1,16 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { AuditLog } from '../models/models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuditService {
+  private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
-  private readonly STORAGE_KEY = 'audit_logs';
+  private readonly ACTION_URL = `${environment.apiUrl}/audit-logs`;
 
   logs = signal<AuditLog[]>([]);
 
@@ -18,32 +21,27 @@ export class AuditService {
   }
 
   private loadLogs() {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
-    if (stored) {
-      this.logs.set(JSON.parse(stored));
-    }
-  }
-
-  private saveLogs() {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.logs()));
-    }
+    this.http.get<AuditLog[]>(this.ACTION_URL).subscribe({
+      next: (data) => this.logs.set(data),
+      error: (err) => console.error('Failed to load audit logs', err)
+    });
   }
 
   getLogs() {
+    // Refresh check
+    if (this.logs().length === 0 && isPlatformBrowser(this.platformId)) {
+      this.loadLogs();
+    }
     return this.logs;
   }
 
   logAction(userId: string, username: string, action: string, details?: string) {
-    const newLog: AuditLog = {
-      id: crypto.randomUUID(),
-      userId,
-      username,
-      action,
-      details,
-      timestamp: new Date()
-    };
-    this.logs.update(logs => [newLog, ...logs]); // Newest first
-    this.saveLogs();
+    const payload = { userId, username, action, details };
+    this.http.post<AuditLog>(this.ACTION_URL, payload).subscribe({
+      next: (newLog) => {
+        this.logs.update(logs => [newLog, ...logs]); // Newest first
+      },
+      error: (err) => console.error('Failed to create audit log', err)
+    });
   }
 }

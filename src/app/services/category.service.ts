@@ -1,13 +1,16 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Category } from '../models/models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CategoryService {
+  private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
-  private readonly STORAGE_KEY = 'categories';
+  private readonly ACTION_URL = `${environment.apiUrl}/categories`;
 
   categories = signal<Category[]>([]);
 
@@ -18,51 +21,44 @@ export class CategoryService {
   }
 
   private loadCategories() {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
-    if (stored) {
-      this.categories.set(JSON.parse(stored));
-    } else {
-      // Default categories
-      const defaults: Category[] = [
-        { id: '1', name: 'Search Engines', order: 1, icon: 'search' },
-        { id: '2', name: 'Social Media', order: 2, icon: 'users' },
-        { id: '3', name: 'Development', order: 3, icon: 'code' },
-        { id: '4', name: 'Entertainment', order: 4, icon: 'film' },
-        { id: '5', name: 'AI Tools', order: 5, icon: 'cpu' },
-        { id: '6', name: 'Design', order: 6, icon: 'palette' },
-        { id: '7', name: 'Other', order: 7, icon: 'other' }
-      ];
-      this.categories.set(defaults);
-      this.saveCategories();
-    }
-  }
-
-  private saveCategories() {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.categories()));
-    }
+    this.http.get<Category[]>(this.ACTION_URL).subscribe({
+      next: (data) => this.categories.set(data),
+      error: (err) => console.error('Failed to load categories', err)
+    });
   }
 
   getCategories() {
+    // Refresh if empty? Or just return signal.
+    if (this.categories().length === 0 && isPlatformBrowser(this.platformId)) {
+      this.loadCategories();
+    }
     return this.categories;
   }
 
   createCategory(category: Omit<Category, 'id'>) {
-    const newCategory: Category = {
-      ...category,
-      id: crypto.randomUUID()
-    };
-    this.categories.update(cats => [...cats, newCategory]);
-    this.saveCategories();
+    this.http.post<Category>(this.ACTION_URL, category).subscribe({
+      next: (newCategory) => {
+        this.categories.update(cats => [...cats, newCategory]);
+      },
+      error: (err) => console.error('Failed to create category', err)
+    });
   }
 
   updateCategory(updatedCategory: Category) {
-    this.categories.update(cats => cats.map(c => c.id === updatedCategory.id ? updatedCategory : c));
-    this.saveCategories();
+    this.http.put<Category>(`${this.ACTION_URL}/${updatedCategory.id}`, updatedCategory).subscribe({
+      next: (data) => {
+        this.categories.update(cats => cats.map(c => c.id === data.id ? data : c));
+      },
+      error: (err) => console.error('Failed to update category', err)
+    });
   }
 
   deleteCategory(id: string) {
-    this.categories.update(cats => cats.filter(c => c.id !== id));
-    this.saveCategories();
+    this.http.delete(`${this.ACTION_URL}/${id}`).subscribe({
+      next: () => {
+        this.categories.update(cats => cats.filter(c => c.id !== id));
+      },
+      error: (err) => console.error('Failed to delete category', err)
+    });
   }
 }

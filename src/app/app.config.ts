@@ -2,6 +2,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners, APP_INITIALIZER,
 import { provideRouter } from '@angular/router';
 import { KeycloakService } from 'keycloak-angular';
 import { isPlatformBrowser } from '@angular/common';
+import { provideHttpClient, withFetch, withInterceptorsFromDi } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -32,6 +33,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    provideHttpClient(withFetch(), withInterceptorsFromDi()),
     provideClientHydration(withEventReplay()),
     KeycloakService,
     {

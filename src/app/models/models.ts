@@ -26,10 +26,12 @@ export interface Website {
   url: string;
   description?: string;
   categoryId: string;
+  category?: Category;
   imageUrl?: string;
   icon?: string;
   isVisible: boolean;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface AuditLog {
