@@ -62,6 +62,7 @@ export class AuthService {
     this.oauthService.loadDiscoveryDocument()
       .then(() => {
         console.log('AutService: Discovery document loaded. Checking URL params...', window.location.search);
+        console.log('AutService: Full URL:', window.location.href);
         // Try to login using Code Flow logic specifically
         return this.oauthService.tryLoginCodeFlow();
       })
