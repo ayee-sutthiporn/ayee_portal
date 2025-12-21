@@ -74,7 +74,7 @@ export class AuthService {
           } else {
             console.log('AutService: No valid access token found. Trying silent refresh (SSO)...');
             // SSO Implementation: Try to silent refresh to check if session exists on IDP
-            return this.oauthService.silentRefresh()
+            this.oauthService.silentRefresh()
               .then(() => {
                 console.log('AutService: Silent refresh successful. Logged in via SSO.');
                 this.handleLoginSuccess();
