@@ -2,6 +2,8 @@ import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { OAuthService, AuthConfig } from 'angular-oauth2-oidc';
 import { User, Role } from '../models/models';
 import { environment } from '../../environments/environment';
@@ -28,9 +30,15 @@ export class AuthService {
   // Signal to track the current user
   currentUser = signal<User | null>(null);
 
+  private isDoneLoadingSubject = new BehaviorSubject<boolean>(false);
+  public isDoneLoading$ = this.isDoneLoadingSubject.asObservable();
+
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.configureOAuth();
+    } else {
+      // If server, we are "done" loading immediately (as we don't do the full init)
+      this.isDoneLoadingSubject.next(true);
     }
   }
 
@@ -52,7 +60,8 @@ export class AuthService {
       if (this.oauthService.hasValidAccessToken()) {
         this.loadUserProfile();
       }
-    });
+      this.isDoneLoadingSubject.next(true);
+    }).catch(() => this.isDoneLoadingSubject.next(true));
 
     // Subscribe to events to keep user state updated
     this.oauthService.events.subscribe(e => {
@@ -110,6 +119,7 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
+    await firstValueFrom(this.isDoneLoading$.pipe(filter(isDone => isDone)));
     return this.isLoggedIn();
   }
 
