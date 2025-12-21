@@ -61,12 +61,12 @@ export class AuthService {
     console.log('AutService: Loading discovery document...');
     this.oauthService.loadDiscoveryDocument()
       .then(() => {
-        console.log('AutService: Discovery document loaded. Trying login...');
-        // Try to login using Code Flow logic
-        return this.oauthService.tryLogin();
+        console.log('AutService: Discovery document loaded. Checking URL params...', window.location.search);
+        // Try to login using Code Flow logic specifically
+        return this.oauthService.tryLoginCodeFlow();
       })
       .then(() => {
-        console.log('AutService: Try login completed.');
+        console.log('AutService: tryLoginCodeFlow completed.');
         if (this.oauthService.hasValidAccessToken()) {
           console.log('AutService: Valid access token found. Loading profile...');
           this.loadUserProfile();
