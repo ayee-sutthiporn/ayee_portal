@@ -1,10 +1,19 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { KeycloakService } from 'keycloak-angular';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
+import { OAuthService, AuthConfig } from 'angular-oauth2-oidc';
 import { User, Role } from '../models/models';
 import { environment } from '../../environments/environment';
+
+interface UserClaims {
+  sub: string;
+  preferred_username?: string;
+  name?: string;
+  email?: string;
+  realm_access?: { roles?: string[] };
+  resource_access?: { [key: string]: { roles?: string[] } };
+}
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +21,7 @@ import { environment } from '../../environments/environment';
 export class AuthService {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
-  private keycloakService = inject(KeycloakService);
+  private oauthService = inject(OAuthService);
   private http = inject(HttpClient);
   private readonly ACTION_URL = `${environment.apiUrl}/users/sync`;
 
@@ -21,32 +30,72 @@ export class AuthService {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      // Init is handled by APP_INITIALIZER in main.ts
-      // Just rely on Keycloak instance state
-      this.initUser();
+      this.configureOAuth();
     }
   }
 
-  private async initUser() {
-    try {
-      if (await this.keycloakService.isLoggedIn()) {
-        const profile = await this.keycloakService.loadUserProfile();
-        const user: User = {
-          id: profile.id || 'unknown',
-          username: profile.username || 'User',
-          email: profile.email || '',
-          role: this.keycloakService.isUserInRole('admin') ? Role.Admin : Role.User,
-          createdAt: new Date() // Mock date, normally from sync
-        };
-        this.currentUser.set(user);
-        this.syncUser();
-      } else {
+  private configureOAuth() {
+    const authConfig: AuthConfig = {
+      issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
+      redirectUri: window.location.origin + '/',
+      clientId: 'portal-sutthiporn.id',
+      responseType: 'code',
+      scope: 'openid profile email offline_access',
+      showDebugInformation: true,
+      requireHttps: false // Set to true in production if strictly HTTPS
+    };
+
+    this.oauthService.configure(authConfig);
+    this.oauthService.setupAutomaticSilentRefresh();
+
+    this.oauthService.loadDiscoveryDocumentAndTryLogin().then(() => {
+      if (this.oauthService.hasValidAccessToken()) {
+        this.loadUserProfile();
+      }
+    });
+
+    // Subscribe to events to keep user state updated
+    this.oauthService.events.subscribe(e => {
+      if (e.type === 'token_received' || e.type === 'discovery_document_loaded') {
+        if (this.oauthService.hasValidAccessToken()) {
+          this.loadUserProfile();
+        }
+      }
+      if (e.type === 'logout') {
         this.currentUser.set(null);
       }
-    } catch (error) {
-      console.error('Failed to initialize user', error);
-      this.currentUser.set(null);
+    });
+  }
+
+  private async loadUserProfile() {
+    const claims = this.oauthService.getIdentityClaims() as any;
+    if (claims) {
+      // Check roles - Keycloak puts resource_access or realm_access in claims
+      // Adjust based on your token structure.
+      // Example: claims.realm_access.roles.includes('admin')
+      const isAdmin = this.checkAdminRole(claims);
+
+      const user: User = {
+        id: claims.sub,
+        username: claims.preferred_username || claims.name || 'User',
+        email: claims.email || '',
+        role: isAdmin ? Role.Admin : Role.User,
+        createdAt: new Date()
+      };
+
+      this.currentUser.set(user);
+      this.syncUser();
     }
+  }
+
+  private checkAdminRole(claims: UserClaims): boolean {
+    if (claims.realm_access?.roles?.includes('admin')) {
+      return true;
+    }
+    if (claims.resource_access?.['portal-sutthiporn.id']?.roles?.includes('admin')) {
+      return true;
+    }
+    return false;
   }
 
   private syncUser() {
@@ -57,11 +106,11 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.currentUser();
+    return this.oauthService.hasValidAccessToken();
   }
 
   async isAuthenticated(): Promise<boolean> {
-    return this.keycloakService.isLoggedIn();
+    return this.isLoggedIn();
   }
 
   getUserRole(): Role | undefined {
@@ -73,15 +122,20 @@ export class AuthService {
   }
 
   manageAccount(): void {
-    this.keycloakService.getKeycloakInstance().accountManagement();
+    // Redirect to Keycloak account page or similar
+    window.location.href = 'https://auth.sutthiporn.dev/realms/portal.sutthiporn/account';
   }
 
   login(): void {
-    this.keycloakService.login();
+    this.oauthService.initCodeFlow();
   }
 
   logout(): void {
-    this.keycloakService.logout(window.location.origin);
+    this.oauthService.logOut();
     this.currentUser.set(null);
+  }
+
+  getAccessToken(): string {
+    return this.oauthService.getAccessToken();
   }
 }
