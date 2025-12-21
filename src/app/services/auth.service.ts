@@ -12,7 +12,7 @@ interface UserClaims {
   name?: string;
   email?: string;
   realm_access?: { roles?: string[] };
-  resource_access?: { [key: string]: { roles?: string[] } };
+  resource_access?: Record<string, { roles?: string[] }>;
 }
 
 @Injectable({
@@ -68,7 +68,7 @@ export class AuthService {
   }
 
   private async loadUserProfile() {
-    const claims = this.oauthService.getIdentityClaims() as any;
+    const claims = this.oauthService.getIdentityClaims() as UserClaims;
     if (claims) {
       // Check roles - Keycloak puts resource_access or realm_access in claims
       // Adjust based on your token structure.
