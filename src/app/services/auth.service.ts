@@ -54,35 +54,35 @@ export class AuthService {
         requireHttps: false // Set to true in production if strictly HTTPS
       };
 
-      console.log('AutService: initialize() start');
+      console.log('AuthService: initialize() start');
       this.oauthService.configure(authConfig);
 
-      console.log('AutService: Loading discovery document...');
+      console.log('AuthService: Loading discovery document...');
       this.oauthService.loadDiscoveryDocument()
         .then(() => {
-          console.log('AutService: Discovery document loaded. Checking URL params...', window.location.search);
-          console.log('AutService: Full URL:', window.location.href);
+          console.log('AuthService: Discovery document loaded. Checking URL params...', window.location.search);
+          console.log('AuthService: Full URL:', window.location.href);
           return this.oauthService.tryLoginCodeFlow();
         })
         .then(() => {
-          console.log('AutService: tryLoginCodeFlow completed.');
+          console.log('AuthService: tryLoginCodeFlow completed.');
           if (this.oauthService.hasValidAccessToken()) {
-            console.log('AutService: Valid access token found. Loading profile...');
+            console.log('AuthService: Valid access token found. Loading profile...');
             this.handleLoginSuccess();
             this.isDoneLoadingSubject.next(true);
             resolve();
           } else {
-            console.log('AutService: No valid access token found. Trying silent refresh (SSO)...');
+            console.log('AuthService: No valid access token found. Trying silent refresh (SSO)...');
             // SSO Implementation: Try to silent refresh to check if session exists on IDP
             this.oauthService.silentRefresh()
               .then(() => {
-                console.log('AutService: Silent refresh successful. Logged in via SSO.');
+                console.log('AuthService: Silent refresh successful. Logged in via SSO.');
                 this.handleLoginSuccess();
                 this.isDoneLoadingSubject.next(true);
                 resolve();
               })
               .catch((err) => {
-                console.log('AutService: Silent refresh failed/no session.', err);
+                console.log('AuthService: Silent refresh failed/no session.', err);
                 // Not logged in, proceed as guest
                 this.isDoneLoadingSubject.next(true);
                 resolve();
@@ -90,12 +90,21 @@ export class AuthService {
           }
         })
         .catch((err) => {
-          console.error('AutService: Initialization error', err);
+          console.error('AuthService: Initialization error', err);
+
           // Auto-recovery: If nonce/state is invalid (likely due to loop/stale storage), clear it.
+          // ALSO catch code_error or standard login_required errors on callback which might hang the app
           if (err && (err.type === 'invalid_nonce_in_state' || JSON.stringify(err).includes('invalid_nonce_in_state'))) {
-            console.warn('AutService: Invalid nonce detected. Clearing storage to recover.');
+            console.warn('AuthService: Invalid nonce detected. Clearing storage to recover.');
             this.oauthService.logOut(true); // true = no redirect, just clear storage
           }
+
+          // If we are on the callback page and failed, redirect to home to clear the error state URL
+          if (window.location.pathname.includes('callback')) {
+            console.warn('AuthService: Login callback failed. Redirecting to home to clear state.');
+            this.router.navigate(['/']);
+          }
+
           this.isDoneLoadingSubject.next(true);
           resolve(); // Resolve even on error to not block app startup
         });
