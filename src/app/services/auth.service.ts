@@ -53,20 +53,40 @@ export class AuthService {
       requireHttps: false // Set to true in production if strictly HTTPS
     };
 
+    console.log('AutService: configureOAuth');
     this.oauthService.configure(authConfig);
-    this.oauthService.setupAutomaticSilentRefresh();
+    // this.oauthService.setupAutomaticSilentRefresh(); // Move to after login
 
-    this.oauthService.loadDiscoveryDocumentAndTryLogin().then(() => {
-      if (this.oauthService.hasValidAccessToken()) {
-        this.loadUserProfile();
-      }
-      this.isDoneLoadingSubject.next(true);
-    }).catch(() => this.isDoneLoadingSubject.next(true));
+    // Explicitly load discovery document first
+    console.log('AutService: Loading discovery document...');
+    this.oauthService.loadDiscoveryDocument()
+      .then(() => {
+        console.log('AutService: Discovery document loaded. Trying login...');
+        // Try to login using Code Flow logic
+        return this.oauthService.tryLogin();
+      })
+      .then(() => {
+        console.log('AutService: Try login completed.');
+        if (this.oauthService.hasValidAccessToken()) {
+          console.log('AutService: Valid access token found. Loading profile...');
+          this.loadUserProfile();
+          this.oauthService.setupAutomaticSilentRefresh();
+        } else {
+          console.log('AutService: No valid access token found.');
+        }
+        this.isDoneLoadingSubject.next(true);
+      })
+      .catch((err) => {
+        console.error('AutService: Initialization error', err);
+        this.isDoneLoadingSubject.next(true);
+      });
 
     // Subscribe to events to keep user state updated
     this.oauthService.events.subscribe(e => {
+      // console.log('AutService: Event', e.type);
       if (e.type === 'token_received' || e.type === 'discovery_document_loaded') {
         if (this.oauthService.hasValidAccessToken()) {
+          // console.log('AutService: Token received or discovery loaded with established session');
           this.loadUserProfile();
         }
       }
