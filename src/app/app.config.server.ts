@@ -37,6 +37,11 @@ class ServerAuthService {
   private router = inject(Router);
   currentUser = signal<User | null>(null);
 
+  // Initialize for SSR - simply resolve immediately
+  initialize(): Promise<void> {
+    return Promise.resolve();
+  }
+
   // Always return false for auth check on server
   isAuthenticated(): Promise<boolean> {
     return Promise.resolve(false);
