@@ -68,17 +68,26 @@ export class AuthService {
           console.log('AutService: tryLoginCodeFlow completed.');
           if (this.oauthService.hasValidAccessToken()) {
             console.log('AutService: Valid access token found. Loading profile...');
-            this.loadUserProfile();
-            this.oauthService.setupAutomaticSilentRefresh();
-            // If we are on the callback page, redirect to home
-            if (window.location.pathname.includes('callback')) {
-              this.router.navigate(['/']);
-            }
+            this.handleLoginSuccess();
+            this.isDoneLoadingSubject.next(true);
+            resolve();
           } else {
-            console.log('AutService: No valid access token found.');
+            console.log('AutService: No valid access token found. Trying silent refresh (SSO)...');
+            // SSO Implementation: Try to silent refresh to check if session exists on IDP
+            return this.oauthService.silentRefresh()
+              .then(() => {
+                console.log('AutService: Silent refresh successful. Logged in via SSO.');
+                this.handleLoginSuccess();
+                this.isDoneLoadingSubject.next(true);
+                resolve();
+              })
+              .catch((err) => {
+                console.log('AutService: Silent refresh failed/no session.', err);
+                // Not logged in, proceed as guest
+                this.isDoneLoadingSubject.next(true);
+                resolve();
+              });
           }
-          this.isDoneLoadingSubject.next(true);
-          resolve(); // Resolve promise to let app startup continue
         })
         .catch((err) => {
           console.error('AutService: Initialization error', err);
@@ -103,6 +112,16 @@ export class AuthService {
         }
       });
     });
+  }
+
+  // Helper to handle actions after successful login (initial or silent)
+  private handleLoginSuccess() {
+    this.loadUserProfile();
+    this.oauthService.setupAutomaticSilentRefresh();
+    // If we are on the callback page, redirect to home
+    if (window.location.pathname.includes('callback')) {
+      this.router.navigate(['/']);
+    }
   }
 
   // private configureOAuth not needed anymore, logic moved to initialize
