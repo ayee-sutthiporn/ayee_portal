@@ -34,68 +34,69 @@ export class AuthService {
   public isDoneLoading$ = this.isDoneLoadingSubject.asObservable();
 
   constructor() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.configureOAuth();
-    } else {
-      // If server, we are "done" loading immediately (as we don't do the full init)
-      this.isDoneLoadingSubject.next(true);
-    }
+    // Constructor handles minimal setup
   }
 
-  private configureOAuth() {
-    const authConfig: AuthConfig = {
-      issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
-      redirectUri: window.location.origin + '/',
-      clientId: 'portal-sutthiporn.id',
-      responseType: 'code',
-      scope: 'openid profile email offline_access',
-      showDebugInformation: true,
-      requireHttps: false // Set to true in production if strictly HTTPS
-    };
+  public initialize(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.isDoneLoadingSubject.next(true);
+      return Promise.resolve();
+    }
 
-    console.log('AutService: configureOAuth');
-    this.oauthService.configure(authConfig);
-    // this.oauthService.setupAutomaticSilentRefresh(); // Move to after login
+    return new Promise((resolve) => {
+      const authConfig: AuthConfig = {
+        issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
+        redirectUri: window.location.origin + '/',
+        clientId: 'portal-sutthiporn.id',
+        responseType: 'code',
+        scope: 'openid profile email offline_access',
+        showDebugInformation: true,
+        requireHttps: false // Set to true in production if strictly HTTPS
+      };
 
-    // Explicitly load discovery document first
-    console.log('AutService: Loading discovery document...');
-    this.oauthService.loadDiscoveryDocument()
-      .then(() => {
-        console.log('AutService: Discovery document loaded. Checking URL params...', window.location.search);
-        console.log('AutService: Full URL:', window.location.href);
-        // Try to login using Code Flow logic specifically
-        return this.oauthService.tryLoginCodeFlow();
-      })
-      .then(() => {
-        console.log('AutService: tryLoginCodeFlow completed.');
-        if (this.oauthService.hasValidAccessToken()) {
-          console.log('AutService: Valid access token found. Loading profile...');
-          this.loadUserProfile();
-          this.oauthService.setupAutomaticSilentRefresh();
-        } else {
-          console.log('AutService: No valid access token found.');
+      console.log('AutService: initialize() start');
+      this.oauthService.configure(authConfig);
+
+      console.log('AutService: Loading discovery document...');
+      this.oauthService.loadDiscoveryDocument()
+        .then(() => {
+          console.log('AutService: Discovery document loaded. Checking URL params...', window.location.search);
+          console.log('AutService: Full URL:', window.location.href);
+          return this.oauthService.tryLoginCodeFlow();
+        })
+        .then(() => {
+          console.log('AutService: tryLoginCodeFlow completed.');
+          if (this.oauthService.hasValidAccessToken()) {
+            console.log('AutService: Valid access token found. Loading profile...');
+            this.loadUserProfile();
+            this.oauthService.setupAutomaticSilentRefresh();
+          } else {
+            console.log('AutService: No valid access token found.');
+          }
+          this.isDoneLoadingSubject.next(true);
+          resolve(); // Resolve promise to let app startup continue
+        })
+        .catch((err) => {
+          console.error('AutService: Initialization error', err);
+          this.isDoneLoadingSubject.next(true);
+          resolve(); // Resolve even on error to not block app startup
+        });
+
+      // Subscribe to events
+      this.oauthService.events.subscribe(e => {
+        if (e.type === 'token_received' || e.type === 'discovery_document_loaded') {
+          if (this.oauthService.hasValidAccessToken()) {
+            this.loadUserProfile();
+          }
         }
-        this.isDoneLoadingSubject.next(true);
-      })
-      .catch((err) => {
-        console.error('AutService: Initialization error', err);
-        this.isDoneLoadingSubject.next(true);
+        if (e.type === 'logout') {
+          this.currentUser.set(null);
+        }
       });
-
-    // Subscribe to events to keep user state updated
-    this.oauthService.events.subscribe(e => {
-      // console.log('AutService: Event', e.type);
-      if (e.type === 'token_received' || e.type === 'discovery_document_loaded') {
-        if (this.oauthService.hasValidAccessToken()) {
-          // console.log('AutService: Token received or discovery loaded with established session');
-          this.loadUserProfile();
-        }
-      }
-      if (e.type === 'logout') {
-        this.currentUser.set(null);
-      }
     });
   }
+
+  // private configureOAuth not needed anymore, logic moved to initialize
 
   private async loadUserProfile() {
     const claims = this.oauthService.getIdentityClaims() as UserClaims;
