@@ -46,7 +46,7 @@ export class AuthService {
     return new Promise((resolve) => {
       const authConfig: AuthConfig = {
         issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
-        redirectUri: window.location.origin + '/',
+        redirectUri: window.location.origin + '/callback',
         clientId: 'portal-sutthiporn.id',
         responseType: 'code',
         scope: 'openid profile email offline_access',
@@ -70,6 +70,10 @@ export class AuthService {
             console.log('AutService: Valid access token found. Loading profile...');
             this.loadUserProfile();
             this.oauthService.setupAutomaticSilentRefresh();
+            // If we are on the callback page, redirect to home
+            if (window.location.pathname.includes('callback')) {
+              this.router.navigate(['/']);
+            }
           } else {
             console.log('AutService: No valid access token found.');
           }

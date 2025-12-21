@@ -21,6 +21,9 @@ import { adminGuard } from './guards/admin.guard';
 import { guestGuard } from './guards/guest.guard';
 
 export const routes: Routes = [
+  // Callback Route (No AuthGuard)
+  { path: 'callback', loadComponent: () => import('./components/callback/callback.component').then(m => m.CallbackComponent) },
+
   // Public Routes (wrapped in PortalLayout)
   {
     path: '',
@@ -33,10 +36,10 @@ export const routes: Routes = [
       { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
     ]
   },
-  
+
   // Admin Routes (wrapped in AdminLayout)
-  { 
-    path: 'admin', 
+  {
+    path: 'admin',
     component: AdminLayoutComponent,
     canActivate: [authGuard, adminGuard],
     children: [
