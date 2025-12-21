@@ -82,6 +82,11 @@ export class AuthService {
         })
         .catch((err) => {
           console.error('AutService: Initialization error', err);
+          // Auto-recovery: If nonce/state is invalid (likely due to loop/stale storage), clear it.
+          if (err && (err.type === 'invalid_nonce_in_state' || JSON.stringify(err).includes('invalid_nonce_in_state'))) {
+            console.warn('AutService: Invalid nonce detected. Clearing storage to recover.');
+            this.oauthService.logOut(true); // true = no redirect, just clear storage
+          }
           this.isDoneLoadingSubject.next(true);
           resolve(); // Resolve even on error to not block app startup
         });
