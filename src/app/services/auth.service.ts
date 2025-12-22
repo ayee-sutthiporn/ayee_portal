@@ -43,6 +43,14 @@ export class AuthService {
       return Promise.resolve();
     }
 
+    // Loop Prevention: Check if we recently failed silent refresh (SSO)
+    // If we did, don't try again automatically until user manually logs in.
+    if (sessionStorage.getItem('auth_sso_failed') === 'true') {
+      console.warn('AuthService: Skipping SSO/Silent Refresh because of previous failure. User must login manually.');
+      this.isDoneLoadingSubject.next(true);
+      return Promise.resolve();
+    }
+
     return new Promise((resolve) => {
       const authConfig: AuthConfig = {
         issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
@@ -83,6 +91,13 @@ export class AuthService {
               })
               .catch((err) => {
                 console.log('AuthService: Silent refresh failed/no session.', err);
+
+                // If the error indicates login is required, mark it so we don't loop next time
+                if (err && (err.error === 'login_required' || err.type === 'login_required')) {
+                  console.warn('AuthService: SSO failed (login_required). Marking session to avoid loop.');
+                  sessionStorage.setItem('auth_sso_failed', 'true');
+                }
+
                 // Not logged in, proceed as guest
                 this.isDoneLoadingSubject.next(true);
                 resolve();
@@ -98,6 +113,13 @@ export class AuthService {
             console.warn('AuthService: Invalid nonce detected. Clearing storage to recover.');
             this.oauthService.logOut(true); // true = no redirect, just clear storage
           }
+
+          // Catch explicit login_required errors from code flow (unlikely but safe to handle)
+          if (err && (err.error === 'login_required' || err.type === 'login_required')) {
+            console.warn('AuthService: Initialization failed (login_required). Marking session to avoid loop.');
+            sessionStorage.setItem('auth_sso_failed', 'true');
+          }
+
 
           // If we are on the callback page and failed, redirect to home to clear the error state URL
           if (window.location.pathname.includes('callback')) {
@@ -125,6 +147,9 @@ export class AuthService {
 
   // Helper to handle actions after successful login (initial or silent)
   private handleLoginSuccess() {
+    // Clear the failure flag since we are now logged in
+    sessionStorage.removeItem('auth_sso_failed');
+
     this.loadUserProfile();
     this.oauthService.setupAutomaticSilentRefresh();
     // If we are on the callback page, redirect to home
@@ -196,6 +221,8 @@ export class AuthService {
   }
 
   login(): void {
+    // User explicitly wants to login, clear any failure flags
+    sessionStorage.removeItem('auth_sso_failed');
     this.oauthService.initCodeFlow();
   }
 
