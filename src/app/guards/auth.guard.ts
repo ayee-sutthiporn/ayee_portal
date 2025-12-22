@@ -1,9 +1,10 @@
 import { inject } from '@angular/core';
-import { CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
+  const router = inject(Router);
 
   const isAuth = await authService.isAuthenticated();
 
@@ -11,7 +12,6 @@ export const authGuard: CanActivateFn = async () => {
     return true;
   }
 
-  // Init login flow
-  authService.login();
-  return false;
+  // Redirect to login page instead of auto-login which might fail silently
+  return router.createUrlTree(['/login']);
 };
