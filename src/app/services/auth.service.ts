@@ -64,6 +64,7 @@ export class AuthService {
       };
 
       console.log('AuthService: initialize() start');
+      this.oauthService.setStorage(localStorage);
       this.oauthService.configure(authConfig);
 
       console.log('AuthService: Loading discovery document...');
