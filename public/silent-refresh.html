@@ -1,0 +1,10 @@
+<!doctype html>
+<html>
+<body>
+    <script>
+        // This file is loaded in an iframe for silent refresh.
+        // It posts the result (hash) back to the parent window which is running the Angular app.
+        parent.postMessage(location.hash, location.origin);
+    </script>
+</body>
+</html>

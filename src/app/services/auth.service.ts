@@ -55,6 +55,7 @@ export class AuthService {
       const authConfig: AuthConfig = {
         issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
         redirectUri: window.location.origin + '/callback',
+        silentRefreshRedirectUri: window.location.origin + '/silent-refresh.html',
         clientId: 'portal-sutthiporn.id',
         responseType: 'code',
         scope: 'openid profile email offline_access',
@@ -92,13 +93,10 @@ export class AuthService {
               .catch((err) => {
                 console.log('AuthService: Silent refresh failed/no session.', err);
 
-                // If the error indicates login is required, mark it so we don't loop next time
-                if (err && (err.error === 'login_required' || err.type === 'login_required')) {
-                  console.warn('AuthService: SSO failed (login_required). Marking session to avoid loop.');
-                  sessionStorage.setItem('auth_sso_failed', 'true');
-                }
+                // Silent refresh failed means user is not logged in (or session expired). 
+                // We do NOT redirect to login here, we just finish loading as unauthenticated.
+                // The GuestGuard or AuthGuard will handle routing if needed.
 
-                // Not logged in, proceed as guest
                 this.isDoneLoadingSubject.next(true);
                 resolve();
               });
@@ -113,13 +111,6 @@ export class AuthService {
             console.warn('AuthService: Invalid nonce detected. Clearing storage to recover.');
             this.oauthService.logOut(true); // true = no redirect, just clear storage
           }
-
-          // Catch explicit login_required errors from code flow (unlikely but safe to handle)
-          if (err && (err.error === 'login_required' || err.type === 'login_required')) {
-            console.warn('AuthService: Initialization failed (login_required). Marking session to avoid loop.');
-            sessionStorage.setItem('auth_sso_failed', 'true');
-          }
-
 
           // If we are on the callback page and failed, redirect to home to clear the error state URL
           if (window.location.pathname.includes('callback')) {
