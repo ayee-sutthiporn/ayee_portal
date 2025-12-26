@@ -174,10 +174,13 @@ export class AuthService {
   }
 
   private checkAdminRole(claims: UserClaims): boolean {
+    // Check Realm Roles
     if (claims.realm_access?.roles?.includes('admin')) {
       return true;
     }
-    if (claims.resource_access?.['portal-sutthiporn.id']?.roles?.includes('admin')) {
+    // Check Client Roles (ระวัง key ที่มี . อาจต้องเข้าถึงแบบ string index)
+    const clientRoles = claims.resource_access?.['portal-sutthiporn.id']?.roles;
+    if (clientRoles?.includes('admin')) {
       return true;
     }
     return false;
