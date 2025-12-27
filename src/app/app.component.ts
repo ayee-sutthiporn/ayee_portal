@@ -1,18 +1,20 @@
 import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser, AsyncPipe } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
+import { AuthService } from './services/auth.service';
 
 
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, AsyncPipe],
   templateUrl: './app.component.html',
   styleUrl: './app.css'
 })
 export class AppComponent implements OnInit {
   private platformId = inject(PLATFORM_ID);
+  public authService = inject(AuthService); // Public for template access
 
   title = 'AyeePortal';
 
