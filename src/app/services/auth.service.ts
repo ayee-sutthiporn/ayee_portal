@@ -55,7 +55,7 @@ export class AuthService {
       const authConfig: AuthConfig = {
         issuer: 'https://auth.sutthiporn.dev/realms/portal.sutthiporn',
         redirectUri: window.location.origin + '/callback',
-        silentRefreshRedirectUri: window.location.origin + '/silent-refresh.html',
+        silentRefreshRedirectUri: window.location.origin + '/silent-check-sso.html',
         clientId: 'portal-sutthiporn.id',
         responseType: 'code',
         scope: 'openid profile email offline_access',
