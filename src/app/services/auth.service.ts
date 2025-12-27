@@ -60,7 +60,8 @@ export class AuthService {
         responseType: 'code',
         scope: 'openid profile email',
         showDebugInformation: true,
-        requireHttps: false // Set to true in production if strictly HTTPS
+        postLogoutRedirectUri: window.location.origin,
+        requireHttps: true // Set to true in production if strictly HTTPS
       };
 
       console.log('AuthService: initialize() start');
