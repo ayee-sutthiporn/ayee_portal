@@ -58,7 +58,7 @@ export class AuthService {
         silentRefreshRedirectUri: window.location.origin + '/assets/silent-refresh.html',
         clientId: 'portal-sutthiporn.id',
         responseType: 'code',
-        scope: 'openid profile email offline_access',
+        scope: 'openid profile email',
         showDebugInformation: true,
         requireHttps: false // Set to true in production if strictly HTTPS
       };
