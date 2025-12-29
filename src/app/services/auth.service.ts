@@ -83,75 +83,50 @@ export class AuthService {
             this.isDoneLoadingSubject.next(true);
             resolve();
           } else {
-            console.log('AuthService: No valid access token found. Trying silent refresh (SSO)...');
-            // SSO Implementation: Try to silent refresh to check if session exists on IDP
-            this.oauthService.silentRefresh()
-              .then(() => {
-                console.log('AuthService: Silent refresh successful. Logged in via SSO.');
-                this.handleLoginSuccess();
-                this.isDoneLoadingSubject.next(true);
-                resolve();
-              })
-              .catch((err) => {
-                console.log('AuthService: Silent refresh failed/no session.', err);
-
-                // Silent refresh failed means user is not logged in (or session expired). 
-                // We do NOT redirect to login here, we just finish loading as unauthenticated.
-                // The GuestGuard or AuthGuard will handle routing if needed.
-
-                this.isDoneLoadingSubject.next(true);
-                resolve();
-              });
+            this.checkSSOInBackground();
           }
         })
         .catch((err) => {
-          console.error('AuthService: Initialization error', err);
-
-          // Auto-recovery: If nonce/state is invalid (likely due to loop/stale storage), clear it.
-          // ALSO catch code_error or standard login_required errors on callback which might hang the app
-          if (err && (err.type === 'invalid_nonce_in_state' || JSON.stringify(err).includes('invalid_nonce_in_state'))) {
-            console.warn('AuthService: Invalid nonce detected. Clearing storage to recover.');
-            this.oauthService.logOut(true); // true = no redirect, just clear storage
-          }
-
-          // If we are on the callback page and failed, redirect to home to clear the error state URL
-          if (window.location.pathname.includes('callback')) {
-            console.warn('AuthService: Login callback failed. Redirecting to home to clear state.');
-            this.router.navigate(['/']);
-          }
-
+          console.error('AuthService: Init Error', err);
+          this.handleInitError(err);
+        }).finally(() => {
+          // *** สำคัญที่สุด: สั่งให้ App โหลดเสร็จทันที ไม่ว่าจะเกิดอะไรขึ้น ***
           this.isDoneLoadingSubject.next(true);
-          resolve(); // Resolve even on error to not block app startup
+          resolve();
         });
-
-      // Subscribe to events
-      this.oauthService.events.subscribe(e => {
-        if (e.type === 'token_received' || e.type === 'discovery_document_loaded') {
-          if (this.oauthService.hasValidAccessToken()) {
-            this.loadUserProfile();
-          }
-        }
-        if (e.type === 'logout') {
-          this.currentUser.set(null);
-        }
-      });
     });
   }
 
-  // Helper to handle actions after successful login (initial or silent)
   private handleLoginSuccess() {
-    // Clear the failure flag since we are now logged in
     sessionStorage.removeItem('auth_sso_failed');
-
     this.loadUserProfile();
-    this.oauthService.setupAutomaticSilentRefresh();
-    // If we are on the callback page, redirect to home
+    // ถ้าอยู่หน้า callback ให้ดีดกลับหน้าแรก
     if (window.location.pathname.includes('callback')) {
       this.router.navigate(['/']);
     }
   }
 
-  // private configureOAuth not needed anymore, logic moved to initialize
+  private handleInitError(err: unknown) {
+    const errorWithType = err as { type?: string };
+    if (errorWithType && (errorWithType.type === 'invalid_nonce_in_state' || JSON.stringify(err).includes('invalid_nonce_in_state'))) {
+      console.warn('AuthService: Invalid nonce. Clearing storage.');
+      this.oauthService.logOut(true);
+    }
+    if (window.location.pathname.includes('callback')) {
+      this.router.navigate(['/']);
+    }
+  }
+
+  private checkSSOInBackground() {
+    this.oauthService.silentRefresh()
+      .then(() => {
+        // ถ้าเจอว่า Login ค้างไว้ ค่อยมาอัปเดตหน้าจอทีหลัง
+        if (this.oauthService.hasValidAccessToken()) {
+          this.handleLoginSuccess();
+        }
+      })
+      .catch(() => { /* เงียบไว้ ไม่ต้องฟ้อง Error */ });
+  }
 
   private async loadUserProfile() {
     const claims = this.oauthService.getIdentityClaims() as UserClaims;
